@@ -37,6 +37,6 @@ docker pull fbelavenuto/syno-compiler:7.1
 docker pull fbelavenuto/syno-compiler:7.2
 
 while read PLATFORM KVER TOOLKIT_VER; do
-    compileLkm "${PLATFORM}" "${KVER}" "${TOOLKIT_VER}" &
+    compileLkm "${PLATFORM}" "${KVER}" "${TOOLKIT_VER}"
 done < PLATFORMS
 wait
