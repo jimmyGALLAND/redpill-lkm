@@ -17,7 +17,7 @@ function compileLkm() {
   PLATFORM=$1
   KVER=$2
   TOOLKIT_VER=$3
-  OUT_PATH="${TMP_PATH}/${PLATFORM}/${KVER}"
+  OUT_PATH="${TMP_PATH}/${PLATFORM}-${KVER}"
   mkdir -p "${OUT_PATH}"
   sudo chmod 1777 "${OUT_PATH}"
   docker run -u 1000 --rm -t -v "${OUT_PATH}":/output -v "${PWD}":/input \
