@@ -4,25 +4,22 @@ set -e
 
 TMP_PATH="/tmp"
 DEST_PATH="output"
-TOOLKIT_VER="7.1"
 
 mkdir -p "${DEST_PATH}"
 
-if [ -f ../arpl/PLATFORMS ]; then
-  cp ../arpl/PLATFORMS PLATFORMS
-else
-  curl -sLO "https://github.com/fbelavenuto/arpl/raw/main/PLATFORMS"
-fi
+#if [ -f ../arpl/PLATFORMS ]; then
+#  cp ../arpl/PLATFORMS PLATFORMS
+#else
+#  curl -sLO "https://github.com/fbelavenuto/arpl/raw/main/PLATFORMS"
+#fi
 
 function compileLkm() {
   PLATFORM=$1
   KVER=$2
+  TOOLKIT_VER=$3
   OUT_PATH="${TMP_PATH}/${PLATFORM}"
   mkdir -p "${OUT_PATH}"
   sudo chmod 1777 "${OUT_PATH}"
-  # Compile using docker
-#  docker run --rm -t -v "${OUT_PATH}":/output -v "${PWD}":/input \
-#    fbelavenuto/syno-toolkit:${PLATFORM}-${TOOLKIT_VER} compile-lkm
   docker run -u 1000 --rm -t -v "${OUT_PATH}":/output -v "${PWD}":/input \
     fbelavenuto/syno-compiler:${TOOLKIT_VER} compile-lkm ${PLATFORM}
   mv "${OUT_PATH}/redpill-dev.ko" "${DEST_PATH}/rp-${PLATFORM}-${KVER}-dev.ko"
@@ -35,9 +32,11 @@ function compileLkm() {
 }
 
 # Main
-docker pull fbelavenuto/syno-compiler:${TOOLKIT_VER}
-while read PLATFORM KVER; do
-#  docker pull fbelavenuto/syno-toolkit:${PLATFORM}-${TOOLKIT_VER}
-  compileLkm "${PLATFORM}" "${KVER}" &
+docker pull fbelavenuto/syno-compiler:7.0
+docker pull fbelavenuto/syno-compiler:7.1
+docker pull fbelavenuto/syno-compiler:7.2
+
+while read PLATFORM KVER TOOLKIT_VER; do
+    compileLkm "${PLATFORM}" "${KVER}" "$TOOLKIT_VER" &
 done < PLATFORMS
 wait
