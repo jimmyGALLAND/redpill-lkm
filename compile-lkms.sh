@@ -17,7 +17,7 @@ function compileLkm() {
   PLATFORM=$1
   KVER=$2
   TOOLKIT_VER=$3
-  OUT_PATH="${TMP_PATH}/${PLATFORM}"
+  OUT_PATH="${TMP_PATH}/${PLATFORM}/${KVER}"
   mkdir -p "${OUT_PATH}"
   sudo chmod 1777 "${OUT_PATH}"
   docker run -u 1000 --rm -t -v "${OUT_PATH}":/output -v "${PWD}":/input \
@@ -32,11 +32,11 @@ function compileLkm() {
 }
 
 # Main
-docker pull fbelavenuto/syno-compiler:7.0
+#docker pull fbelavenuto/syno-compiler:7.0
 docker pull fbelavenuto/syno-compiler:7.1
 docker pull fbelavenuto/syno-compiler:7.2
 
 while read PLATFORM KVER TOOLKIT_VER; do
-    compileLkm "${PLATFORM}" "${KVER}" "$TOOLKIT_VER" &
+    compileLkm "${PLATFORM}" "${KVER}" "${TOOLKIT_VER}" &
 done < PLATFORMS
 wait
