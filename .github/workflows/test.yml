@@ -5,7 +5,8 @@
 # See /LICENSE for more information.
 #
 
-# version: [ 7.1, 7.2 ]
+# # 注意：所有 include 组合会在 exclude 之后处理。 这允许你使用 include 添加回以前排除的组合。
+# version: [ 6.2, 7.1, 7.2 ]
 # platform: [ apollolake, broadwell, broadwellnk, bromolow, denverton, epyc7002, geminilake, purley, r1000, v1000 ]
 # exclude:
 #   - version: 7.1
@@ -14,7 +15,7 @@
 #   - version: "7.2"
 #     platform: "broadwell"
 
-name: Build lkms
+name: Build lkms test
 
 on:  
   release:
@@ -32,70 +33,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.1 
-            platform: apollolake
-            parm: 'dev-v7 prod-v7'
-          - version: 7.1
-            platform: braswell
-            parm: 'dev-v7 prod-v7'
-          - version: 7.1
-            platform: broadwell
-            parm: 'dev-v7 prod-v7'
-          - version: 7.1 
-            platform: broadwellnk
-            parm: 'dev-v7 prod-v7'
-          - version: 7.1 
-            platform: bromolow
-            parm: 'dev-v7 prod-v7'
-          - version: 7.1
-            platform: denverton
-            parm: 'dev-v7 prod-v7'
           - version: 7.1
             platform: epyc7002
-            parm: 'dev-v7 prod-v7'
-          - version: 7.1 
-            platform: geminilake
-            parm: 'dev-v7 prod-v7'
-          - version: 7.1 
-            platform: purley
-            parm: 'dev-v7 prod-v7'
-          - version: 7.1
-            platform: r1000
-            parm: 'dev-v7 prod-v7'
-          - version: 7.1
-            platform: v1000
-            parm: 'dev-v7 prod-v7'
-
-          - version: 7.2 
-            platform: apollolake
-            parm: 'dev-v7 prod-v7'
-          - version: 7.2
-            platform: braswell
-            parm: 'dev-v7 prod-v7'
-          - version: 7.2
-            platform: broadwell
-            parm: 'dev-v7 prod-v7'
-          - version: 7.2 
-            platform: broadwellnk
-            parm: 'dev-v7 prod-v7'
-          - version: 7.2
-            platform: denverton
-            parm: 'dev-v7 prod-v7'
-          - version: 7.2 
-            platform: geminilake
-            parm: 'dev-v7 prod-v7'
-          - version: 7.2 
-            platform: purley
-            parm: 'dev-v7 prod-v7'
-          - version: 7.2
-            platform: r1000
-            parm: 'dev-v7 prod-v7'
-          - version: 7.2
-            platform: v1000
-            parm: 'dev-v7 prod-v7'
+            parm: 'dev-v7 prod-v7 test-v7'
+   
           - version: 7.2
             platform: epyc7002
-            parm: 'dev-v7 prod-v7'
+            parm: 'dev-v7 prod-v7 test-v7'
 
     runs-on: ubuntu-latest
 
@@ -107,16 +51,29 @@ jobs:
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          sudo timedatectl set-timezone "Europe/Paris" 
+          sudo timedatectl set-timezone "Asia/Shanghai" 
+          
+      # - name: Cache EnvDeploy
+      #   id: cache-env
+      #   uses: actions/cache@v3
+      #   env:
+      #     cache-name: cache-env
+      #   with:
+      #     path: |
+      #       ${{ github.workspace }}/pkgscripts-ng
+      #       ${{ github.workspace }}/build_env
+      #     key: ds.${{ matrix.platform }}-${{ matrix.version }}
           
       - name: Get EnvDeploy
+        # if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
         run: |
           ROOT_PATH=${{ github.workspace }}
 
           git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
           cd ${ROOT_PATH}/pkgscripts-ng
-          git checkout DSM${{ matrix.version }}
-          sudo ./EnvDeploy -v ${{ matrix.version }} -l  # Get Available platforms
+          # if version == 6.2, checkout 6.2.4
+          git checkout DSM${{ matrix.version }}`[ "${{ matrix.version }}" = "6.2" ] && echo ".4"`
+          sudo ./EnvDeploy -v ${{ matrix.version }}`[ "${{ matrix.version }}" = "6.2" ] && echo ".4"` -l  # Get Available platforms
           sudo ./EnvDeploy -q -v ${{ matrix.version }} -p ${{ matrix.platform }}
 
           #ENV
@@ -188,7 +145,7 @@ jobs:
               strip -g redpill.ko    # Discard symbols from object files. 
               RPKOVER=$(modinfo --field=vermagic redpill.ko | awk '{print $1}')
               gzip redpill.ko
-              mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
+              mv -f ./redpill.ko.gz /source/output/rp-${{ matrix.platform }}-${{ matrix.version }}-${RPKOVER/+/}-`echo ${a} | awk -F'-' '{print $1}'`.ko.gz
             else
               echo "error"
             fi
@@ -210,57 +167,5 @@ jobs:
         # if: ${{ steps.cache-env.outputs.cache-hit == 'true' }}
         run: |
           sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/*
-
-
-  release:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout
-        uses: actions/checkout@main
-
-      - name: Calculate version
-        run: |
-          # Calculate version
-          VERSION=""
-          if [ ${{ github.event_name }} == 'release' -a ${{ github.ref_type }} == 'tag' ]; then
-            VERSION="${{ github.ref_name }}"
-          elif [ -n "${{ inputs.version }}" ]; then
-            if [ "`echo ${{ inputs.version }} | cut -d '.' -f 1,2`" = "`date +'%y.%-m'`" ]; then
-              VERSION="${{ inputs.version }}"
-            else
-              LATEST_TAG="`curl -skL "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r ".tag_name" 2>/dev/null`"
-              if [ -n "${LATEST_TAG}" -a "`echo ${LATEST_TAG} | cut -d '.' -f 1,2`" = "`date +'%y.%-m'`" ]; then  # format %y.%-m.$i
-                VERSION="`echo ${LATEST_TAG} | awk -F '.' '{$3=$3+1}1' OFS='.'`"
-              else
-                VERSION="`date +'%y.%-m'`.0"
-              fi
-            fi
-          else
-            VERSION=""
-          fi
-
-          echo "VERSION: ${VERSION}"
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
-
-      - name: download to artifacts
-        if: env.VERSION != ''
-        uses: actions/download-artifact@v3
-        with:
-          name: rp-lkms
-          path: ./rp-lkms
-
-      - name: Zip lkms
-        if: env.VERSION != ''
-        run: |
-          echo "${{ env.VERSION }}" > "rp-lkms/VERSION"
-          zip -9 rp-lkms.zip -j rp-lkms/*
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: env.VERSION != ''
-        with:
-          tag_name: ${{ env.VERSION }}
-          files: rp-lkms.zip
 
 

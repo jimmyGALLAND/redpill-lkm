@@ -57,4 +57,5 @@ dkms.conf
 email.patch
 linux-*/
 .idea/
+.vscode/
 _compile.sh

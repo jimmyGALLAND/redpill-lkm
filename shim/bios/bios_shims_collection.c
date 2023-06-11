@@ -237,6 +237,7 @@ int shim_disk_leds_ctrl(const struct hw_config *hw)
     pr_loc_dbg("Shimming disk led control API");
 
     int out;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
     //funcSYNOSATADiskLedCtrl exists on (almost?) all platforms, but it's null on some... go figure ;)
     if (funcSYNOSATADiskLedCtrl) {
         ov_funcSYNOSATADiskLedCtrl = override_symbol("funcSYNOSATADiskLedCtrl", funcSYNOSATADiskLedCtrl_shim);
@@ -247,6 +248,7 @@ int shim_disk_leds_ctrl(const struct hw_config *hw)
             return out;
         }
     }
+#endif
 
     if (kernel_has_symbol("syno_ahci_disk_led_enable")) {
         ov_syno_ahci_disk_led_enable = override_symbol("syno_ahci_disk_led_enable", syno_ahci_disk_led_enable_shim);
@@ -278,6 +280,8 @@ int unshim_disk_leds_ctrl(void)
 
     int out;
     bool failed = false;
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
     if (ov_funcSYNOSATADiskLedCtrl) {
         out = restore_symbol(ov_funcSYNOSATADiskLedCtrl);
         ov_funcSYNOSATADiskLedCtrl = NULL;
@@ -286,6 +290,7 @@ int unshim_disk_leds_ctrl(void)
             failed = true;
         }
     }
+#endif
 
     if (ov_syno_ahci_disk_led_enable) {
         out = restore_symbol(ov_syno_ahci_disk_led_enable);
