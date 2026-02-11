@@ -284,6 +284,7 @@ jobs:
       - name: Zip lkms
         if: env.VERSION != ''
         run: |
+          mkdir -p rp-lkms
           echo "${{ env.VERSION }}" > "rp-lkms/VERSION"
           find artifacts -type f -name "*.ko.gz" -exec cp {} rp-lkms/ \;
           zip -9 rp-lkms.zip -j rp-lkms/*
