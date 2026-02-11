@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-# version: [ 7.1, 7.2 ]
+# version: [ 7.1, 7.2, 7.3 ]
 # platform: [ apollolake, broadwell, broadwellnk, bromolow, denverton, epyc7002, geminilake, purley, r1000, v1000 ]
 # exclude:
 #   - version: 7.1
@@ -97,6 +97,36 @@ jobs:
             platform: epyc7002
             parm: 'dev-v7 prod-v7'
 
+          - version: 7.3
+            platform: apollolake
+            parm: 'dev-v7 prod-v7'
+          - version: 7.3
+            platform: braswell
+            parm: 'dev-v7 prod-v7'
+          - version: 7.3
+            platform: broadwell
+            parm: 'dev-v7 prod-v7'
+          - version: 7.3
+            platform: broadwellnk
+            parm: 'dev-v7 prod-v7'
+          - version: 7.2
+            platform: denverton
+            parm: 'dev-v7 prod-v7'
+          - version: 7.3
+            platform: geminilake
+            parm: 'dev-v7 prod-v7'
+          - version: 7.3
+            platform: purley
+            parm: 'dev-v7 prod-v7'
+          - version: 7.3
+            platform: r1000
+            parm: 'dev-v7 prod-v7'
+          - version: 7.3
+            platform: v1000
+            parm: 'dev-v7 prod-v7'
+          - version: 7.3
+            platform: epyc7002
+            parm: 'dev-v7 prod-v7'
     runs-on: ubuntu-latest
 
     steps:
@@ -200,7 +230,7 @@ jobs:
           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
 
       - name: Upload to Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: rp-lkms
           path: |
@@ -245,7 +275,7 @@ jobs:
 
       - name: download to artifacts
         if: env.VERSION != ''
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v7
         with:
           name: rp-lkms
           path: ./rp-lkms
@@ -257,7 +287,7 @@ jobs:
           zip -9 rp-lkms.zip -j rp-lkms/*
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: env.VERSION != ''
         with:
           tag_name: ${{ env.VERSION }}
